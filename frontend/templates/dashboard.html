@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="mb-0">Your Complaints</h3>
+    <small class="text-muted">Overview of complaints you've filed</small>
+  </div>
+  <div>
+    <a href="{{ url_for('add_complaint') }}" class="btn btn-primary">File New Complaint</a>
+    <a href="{{ url_for('profile') }}" class="btn btn-outline-secondary ms-2">Profile</a>
+  </div>
+</div>
+
+<div class="card p-3 mb-4">
+  {% if complaints %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:90px">ID</th>
+            <th>Title</th>
+            <th style="width:160px">Filed On</th>
+            <th style="width:140px">Status</th>
+            <th style="width:180px">Location</th>
+            <th style="width:200px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in complaints %}
+            <tr>
+              <td class="fw-semibold">{{ c.complaint_id }}</td>
+              <td>
+                <div class="fw-medium">{{ c.title }}</div>
+                <div class="muted-small">{{ c.classification or '—' }}</div>
+              </td>
+              <td class="muted-small">{{ c.created_at | datetimeformat }}</td>
+              <td>
+                {% set s = (c.status or 'Pending') %}
+                {% if s.lower() == 'pending' %}
+                  <span class="badge bg-secondary">{{ s }}</span>
+                {% elif s.lower() == 'investigating' %}
+                  <span class="badge bg-info text-dark">{{ s }}</span>
+                {% elif s.lower() == 'resolved' %}
+                  <span class="badge bg-success">{{ s }}</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">{{ s }}</span>
+                {% endif %}
+              </td>
+              <td class="muted-small">{{ c.ip_city or '-' }}, {{ c.ip_country or '-' }}</td>
+              <td>
+                {% if c.complaint_id is defined %}
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('complaint_status', complaint_id=c.complaint_id) }}">View</a>
+                  <a class="btn btn-sm btn-outline-secondary ms-1" href="{{ url_for('evidence_viewer', complaint_id=c.complaint_id) }}">Evidence</a>
+                {% else %}
+                  <span class="text-muted small">No actions</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="p-4 text-center text-muted">
+      <h5 class="mb-2">You haven't filed any complaints yet.</h5>
+      <p class="mb-3">Click the button below to file your first complaint.</p>
+      <a class="btn btn-primary" href="{{ url_for('add_complaint') }}">File New Complaint</a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Optional quick stats -->
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h6 class="mb-2">Total Complaints</h6>
+      <div class="display-6">{{ complaints|length if complaints else 0 }}</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h6 class="mb-2">Open / Pending</h6>
+      <div class="h5">
+        {% set pending = 0 %}
+        {% if complaints %}
+          {% for c in complaints %}
+            {% if (c.status or 'Pending')|lower == 'pending' %}
+              {% set pending = pending + 1 %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {{ pending }}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h6 class="mb-2">Resolved</h6>
+      <div class="h5">
+        {% set resolved = 0 %}
+        {% if complaints %}
+          {% for c in complaints %}
+            {% if (c.status or '')|lower == 'resolved' %}
+              {% set resolved = resolved + 1 %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {{ resolved }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

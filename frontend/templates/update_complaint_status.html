@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Update Complaint Status{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Update Status for Complaint #{{ complaint.complaint_id }}</h2>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">{{ complaint.title }}</h5>
+    <p class="card-text">{{ complaint.description }}</p>
+  </div>
+</div>
+
+<form method="POST">
+  <div class="mb-3">
+    <label for="status_update" class="form-label">New Status Update</label>
+    <textarea class="form-control" id="status_update" name="status_update" rows="3" required></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Submit Update</button>
+  <a href="{{ url_for('police_dashboard') }}" class="btn btn-secondary ms-2">Cancel</a>
+</form>
+
+<h4 class="mt-5">Status History</h4>
+<ul class="list-group">
+  {% for status in status_updates %}
+    <li class="list-group-item">
+      <strong>{{ status.updated_at|datetimeformat }}</strong>: {{ status.status_update }}
+    </li>
+  {% else %}
+    <li class="list-group-item">No status updates yet.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

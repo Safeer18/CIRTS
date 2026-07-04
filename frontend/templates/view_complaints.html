@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}My Complaints{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="mb-0">All Complaints Filed</h3>
+    <small class="text-muted">Detailed list of your complaints with evidence</small>
+  </div>
+  <div>
+    <a href="{{ url_for('add_complaint') }}" class="btn btn-primary">File New Complaint</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary ms-2">Back to Dashboard</a>
+  </div>
+</div>
+
+<div class="card p-3">
+  {% if complaints %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:70px;">ID</th>
+            <th>Title</th>
+            <th style="width:160px;">Filed On</th>
+            <th style="width:120px;">Status</th>
+            <th style="width:190px;">Location</th>
+            <th style="width:120px;">Evidence</th>
+            <th style="width:200px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr>
+            <td class="fw-semibold">{{ c.complaint_id }}</td>
+            <td>
+              <div class="fw-medium">{{ c.title }}</div>
+              <div class="muted-small">{{ c.classification or '—' }}</div>
+            </td>
+            <td class="muted-small">
+              {% if c.created_at is defined %}
+                {{ c.created_at | datetimeformat }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>
+              {% set s = (c.status or 'Pending') %}
+              {% if s.lower() == 'pending' %}
+                <span class="badge bg-secondary">{{ s }}</span>
+              {% elif s.lower() == 'investigating' %}
+                <span class="badge bg-info text-dark">{{ s }}</span>
+              {% elif s.lower() == 'resolved' %}
+                <span class="badge bg-success">{{ s }}</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">{{ s }}</span>
+              {% endif %}
+            </td>
+            <td class="muted-small">
+              {{ c.ip_city or '-' }}, {{ c.ip_country or '-' }}
+            </td>
+            <td>
+              {% set ev_list = c.evidence if c.evidence is defined else [] %}
+              {% if ev_list and ev_list|length > 0 %}
+                <span class="badge bg-primary">{{ ev_list|length }} file(s)</span>
+              {% else %}
+                <span class="text-muted small">No evidence</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.complaint_id is defined %}
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('complaint_status', complaint_id=c.complaint_id) }}">View</a>
+                <a class="btn btn-sm btn-outline-secondary ms-1" href="{{ url_for('evidence_viewer', complaint_id=c.complaint_id) }}">Evidence</a>
+              {% else %}
+                <span class="text-muted small">No actions</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="p-4 text-center text-muted">
+      <h5 class="mb-2">No complaints found.</h5>
+      <p class="mb-3">Once you file complaints, they will appear here with their status and evidence.</p>
+      <a class="btn btn-primary" href="{{ url_for('add_complaint') }}">File New Complaint</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

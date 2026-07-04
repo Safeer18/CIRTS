@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Investigator Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Investigator Dashboard</h3>
+  <form method="get" class="d-flex" style="gap:8px;">
+    <select name="status" class="form-select form-select-sm">
+      <option value="">All Statuses</option>
+      <option value="Pending" {% if request.args.get('status')=='Pending' %}selected{% endif %}>Pending</option>
+      <option value="Investigating" {% if request.args.get('status')=='Investigating' %}selected{% endif %}>Investigating</option>
+      <option value="Resolved" {% if request.args.get('status')=='Resolved' %}selected{% endif %}>Resolved</option>
+    </select>
+    <input type="text" name="q" class="form-control form-control-sm" placeholder="Search by id or title" value="{{ request.args.get('q','') }}">
+    <button class="btn btn-sm btn-primary" type="submit">Filter</button>
+  </form>
+</div>
+
+<form id="bulkForm" method="post" action="{{ url_for('bulk_assign') }}">
+  <div class="mb-2">
+    <button type="button" id="selectAllBtn" class="btn btn-sm btn-outline-secondary">Select All</button>
+    <button type="submit" class="btn btn-sm btn-success ms-2">Assign Selected to My Section</button>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width:36px"></th>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Classification</th>
+        <th>Status</th>
+        <th>Reporter</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if complaints %}
+        {% for c in complaints %}
+        <tr>
+          <td><input type="checkbox" name="complaint_ids" value="{{ c.complaint_id }}"></td>
+          <td>{{ c.complaint_id }}</td>
+          <td>{{ c.title }}</td>
+          <td>{{ c.classification }}</td>
+          <td>{{ c.status or 'Pending' }}</td>
+          <td>{{ c.username or c.reporter_username or '-' }}</td>
+          <td>
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('complaint_status', complaint_id=c.complaint_id) }}">View</a>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('evidence_viewer', complaint_id=c.complaint_id) }}">Evidence</a>
+          </td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted">No complaints available.</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</form>
+
+<script>
+document.getElementById('selectAllBtn').addEventListener('click', function(){
+  const checkboxes = document.querySelectorAll('input[name="complaint_ids"]');
+  const anyUnchecked = Array.from(checkboxes).some(cb => !cb.checked);
+  checkboxes.forEach(cb => cb.checked = anyUnchecked);
+});
+
+document.getElementById('bulkForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const form = e.target;
+  const checked = Array.from(document.querySelectorAll('input[name="complaint_ids"]:checked')).map(cb => cb.value);
+  if(checked.length === 0){
+    alert('Select at least one complaint to assign.');
+    return;
+  }
+  const prev = form.querySelector('input[name="selected_ids"]');
+  if(prev) prev.remove();
+  const hidden = document.createElement('input');
+  hidden.type = 'hidden';
+  hidden.name = 'selected_ids';
+  hidden.value = JSON.stringify(checked);
+  form.appendChild(hidden);
+  form.submit();
+});
+</script>
+{% endblock %}

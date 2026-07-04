@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% from "_timeline.html" import timeline %}
+{% block title %}Complaint Status - {{ complaint.complaint_id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card mb-3 p-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h4>Complaint #{{ complaint.complaint_id }} — {{ complaint.title }}</h4>
+          <p class="mb-1"><strong>Classification:</strong> {{ complaint.classification or '-' }}</p>
+          <p class="mb-1"><strong>Reported by:</strong> {{ complaint.username or complaint.reporter_username or 'Unknown' }}</p>
+          <p class="mb-0"><strong>Filed on:</strong> {{ complaint.created_at | datetimeformat }}</p>
+        </div>
+        <div class="text-end">
+          {% if session.get('role') == 'investigator' %}
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('update_complaint_status', complaint_id=complaint.complaint_id) }}">Update Status</a>
+          {% endif %}
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('evidence_viewer', complaint_id=complaint.complaint_id) }}">View Evidence</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-3">
+      <h5 class="mb-3">Case Timeline</h5>
+
+      {% if statuses %}
+        {{ timeline(statuses) }}
+      {% else %}
+        <div class="p-3 text-muted">No status updates yet. (Default: Pending)</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card p-3 mb-3">
+      <h6>Quick Details</h6>
+      <ul class="list-unstyled">
+        <li><strong>Complaint ID:</strong> {{ complaint.complaint_id }}</li>
+        <li><strong>Current Status:</strong> {{ complaint.status or 'Pending' }}</li>
+        <li><strong>Section:</strong> {{ complaint.section_id or '-' }}</li>
+        <li><strong>IP Location:</strong> {{ complaint.ip_city }}, {{ complaint.ip_country }}</li>
+      </ul>
+    </div>
+
+    <div class="card p-3 mb-3">
+      <h6>Evidence</h6>
+      {% set ev = models.get_evidence_by_complaint(complaint.complaint_id) %}
+      {% if ev %}
+        <ul class="list-unstyled">
+          {% for e in ev %}
+            <li class="mb-2">
+              <i class="fas fa-file"></i>
+              {{ e.file_name or e.file_path }}
+              <div class="mt-1">
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('download_evidence', complaint_id=complaint.complaint_id, filename=(e.file_name or e.file_path)) }}">Download</a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="text-muted">No evidence uploaded.</div>
+      {% endif %}
+    </div>
+
+    <div class="card p-3">
+      <h6>Audit</h6>
+      <small class="text-muted">Recent actions on this complaint</small>
+      <ul class="list-unstyled mt-2">
+        {% set audits = models.get_audit_logs(10) %}
+        {% if audits %}
+          {% for a in audits if a.details and (complaint.complaint_id|string) in (a.details|string) %}
+            <li>
+              <small><strong>{{ a.action_time }}</strong> — {{ a.action }}</small>
+            </li>
+          {% endfor %}
+        {% else %}
+          <li class="text-muted">No audit entries.</li>
+        {% endif %}
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- Lightweight CSS for timeline -->
+<style>
+.timeline {
+  position: relative;
+  margin-left: 10px;
+  padding-left: 20px;
+}
+.timeline:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8px;
+  bottom: 0;
+  width: 2px;
+  background: #e9ecef;
+}
+.timeline-item {
+  position: relative;
+  padding: 8px 16px;
+  border-left: 0;
+}
+.timeline-item:before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0d6efd;
+  box-shadow: 0 0 0 4px rgba(13,110,253,0.08);
+}
+.timeline-item strong {
+  display: block;
+  font-weight: 600;
+}
+</style>
+{% endblock %}

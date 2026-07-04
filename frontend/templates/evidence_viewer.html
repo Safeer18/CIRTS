@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Evidence Viewer{% endblock %}
+{% block content %}
+<h3>Evidence for Complaint #{{ complaint_id }}</h3>
+<div class="row">
+  {% for e in evidence %}
+    <div class="col-md-6 mb-3">
+      <div class="card p-2">
+        <p><strong>{{ e.file_name }}</strong></p>
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('download_evidence', complaint_id=complaint_id, filename=e.file_name) }}">Download</a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

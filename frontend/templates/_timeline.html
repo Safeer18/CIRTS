@@ -1,0 +1,9 @@
+{% macro timeline(statuses) -%}
+<div class="timeline">
+  {% for s in statuses %}
+    <div class="timeline-item mb-3">
+      <div><strong>{{ s.updated_at }}</strong> — {{ s.status_update }}</div>
+    </div>
+  {% endfor %}
+</div>
+{%- endmacro %}

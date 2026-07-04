@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}File Complaint{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h3 class="card-title mb-4">
+          <i class="fas fa-file-alt text-primary"></i> File a Complaint
+        </h3>
+        <form method="POST" enctype="multipart/form-data">
+          <!-- Hidden field where client JS will put the public IP -->
+          <input type="hidden" name="public_ip" id="public_ip" value="">
+
+          <div class="mb-3">
+            <label for="title" class="form-label">Complaint Title</label>
+            <input type="text" class="form-control" id="title" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="classification" class="form-label">Complaint Classification</label>
+            <select class="form-select" id="classification" name="classification" required>
+              <option value="" selected disabled>Select classification</option>
+              <option value="Phishing">Phishing</option>
+              <option value="Identity Theft">Identity Theft</option>
+              <option value="Hacking">Hacking</option>
+              <option value="Cyberbullying">Cyberbullying</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="evidence_files" class="form-label">Upload Evidence Files</label>
+            <input type="file" class="form-control" id="evidence_files" name="evidence_files" multiple>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Submit Complaint
+          </button>
+          <a href="{{ url_for('dashboard') }}" class="btn btn-secondary ms-2">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Client-side script to detect user's public IP and set the hidden field -->
+<script>
+async function setPublicIP() {
+  const input = document.getElementById('public_ip');
+  if (!input) return;
+
+  try {
+    // ipify returns {"ip":"x.x.x.x"}
+    const resp = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    if (!resp.ok) throw new Error('ipify HTTP ' + resp.status);
+    const data = await resp.json();
+    if (data && data.ip) {
+      input.value = data.ip;
+      console.log('Public IP detected (client):', data.ip);
+    }
+  } catch (err) {
+    console.warn('Could not fetch public IP (ipify):', err);
+    // Leave hidden input blank; server-side fallback will be used.
+  }
+}
+
+// Run when page loads
+window.addEventListener('load', setPublicIP);
+
+// Optional: ensure public_ip is set right before the form submits
+document.addEventListener('submit', function(e) {
+  const form = e.target;
+  if (form && form.querySelector && form.querySelector('#public_ip')) {
+    // If empty, attempt to set it again (async) — usually it will already be set.
+    setPublicIP();
+  }
+});
+</script>
+{% endblock %}
